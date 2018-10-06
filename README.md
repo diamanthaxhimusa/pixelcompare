@@ -1,1 +1,1 @@
-# pixelcompare
+# Pixelcompare - Vannija JS image comparison
