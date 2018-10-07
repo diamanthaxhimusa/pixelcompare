@@ -1,0 +1,229 @@
+"use strict";
+
+var _extend = function _extend(defaults, options) {
+  var extended = {};
+  var prop;
+  for (prop in defaults) {
+    if (Object.prototype.hasOwnProperty.call(defaults, prop)) {
+      extended[prop] = defaults[prop];
+    }
+  }
+  for (prop in options) {
+    if (Object.prototype.hasOwnProperty.call(options, prop)) {
+      extended[prop] = options[prop];
+    }
+  }
+  return extended;
+};
+
+var _addClass = function _addClass(element, classname) {
+  var arr;
+  arr = element.className.split(" ");
+  if (arr.indexOf(classname) == -1) {
+    element.className += " " + classname;
+  }
+};
+
+var _hasClass = function _hasClass(element, className) {
+  return new RegExp("(\\s|^)" + className + "(\\s|$)").test(element.className);
+};
+
+var _removeClass = function _removeClass(element, className) {
+  element.classList.remove(className);
+};
+
+var _wrap = function _wrap(element, tag, sliderOrientation) {
+  var div = document.createElement(tag);
+  _addClass(div, "pixelcompare-wrapper pixelcompare-" + sliderOrientation);
+  element.parentElement.insertBefore(div, element);
+  div.appendChild(element);
+  return div;
+};
+
+var pixelcompare = function pixelcompare(options) {
+  var options = _extend(
+    {
+      default_offset_pct: 0.5,
+      orientation: "horizontal",
+      overlay: false,
+      hover: false,
+      move_with_handle_only: true,
+      click_to_move: false
+    },
+    options
+  );
+
+  var imgs = document.querySelectorAll(options.container);
+
+  return imgs.forEach(function (el) {
+    var sliderPct = options.default_offset_pct;
+    var imageContainer = el;
+    var sliderOrientation = options.orientation;
+    var beforeDirection = sliderOrientation === "vertical" ? "down" : "left";
+    var afterDirection = sliderOrientation === "vertical" ? "up" : "right";
+
+    var container = _wrap(el, "div", sliderOrientation);
+
+    var beforeImg = container.querySelectorAll("img")[0];
+
+    var afterImg = container.querySelectorAll("img")[1];
+
+    var node = document.createElement("div");
+    _addClass(node, "pixelcompare-handle");
+    container.appendChild(node);
+
+    var slider = container.querySelector(".pixelcompare-handle");
+    var sliderChildNodeBeforeDirection = document.createElement("span");
+    _addClass(
+      sliderChildNodeBeforeDirection,
+      "pixelcompare-" + beforeDirection + "-arrow"
+    );
+    slider.appendChild(sliderChildNodeBeforeDirection);
+    // container.append("<span class='twentytwent-slide-line'></span>");
+    var sliderChildNodeAfterDirection = document.createElement("span");
+    _addClass(
+      sliderChildNodeAfterDirection,
+      "pixelcompare-" + afterDirection + "-arrow"
+    );
+    slider.appendChild(sliderChildNodeAfterDirection);
+    _addClass(container, "pixelcompare-container");
+    _addClass(beforeImg, "pixelcompare-before");
+    _addClass(afterImg, "pixelcompare-after");
+    if (options.overlay) {
+      var overlayNode = document.createElement("div");
+      _addClass(overlayNode, "pixelcompare-overlay");
+      container.appendChild(overlayNode);
+    }
+
+    var calcOffset = function calcOffset(dimensionPct) {
+      var w = beforeImg.getBoundingClientRect().width;
+      var h = beforeImg.getBoundingClientRect().height;
+      return {
+        w: w + "px",
+        h: h + "px",
+        cw: dimensionPct * w + "px",
+        ch: dimensionPct * h + "px"
+      };
+    };
+
+    var adjustContainer = function adjustContainer(offset) {
+      if (sliderOrientation === "vertical") {
+        beforeImg.style.clip =
+          "rect(0, " + offset.w + ", " + offset.ch + ", 0)";
+        afterImg.style.clip =
+          "rect(" + offset.ch + ", " + offset.w + ", " + offset.h + ", 0)";
+      } else {
+        beforeImg.style.clip =
+          "rect(0, " + offset.cw + ", " + offset.h + ", 0)";
+        afterImg.style.clip =
+          "rect(0, " + offset.w + "," + offset.h + "," + offset.cw + ")";
+      }
+      container.style.height = offset.h;
+    };
+
+    var adjustSlider = function adjustSlider(pct) {
+      var offset = calcOffset(pct);
+      if (sliderOrientation === "vertical") slider.style.top = offset.ch;
+      else {
+        slider.style.left = offset.cw;
+      }
+      adjustContainer(offset);
+    };
+
+    // Return the number specified or the min/max number if it outside the range given.
+    var minMaxNumber = function minMaxNumber(num, min, max) {
+      return Math.max(min, Math.min(max, num));
+    };
+
+    // Calculate the slider percentage based on the position.
+    var getSliderPercentage = function getSliderPercentage(
+      positionX,
+      positionY
+    ) {
+      var sliderPercentage =
+        sliderOrientation === "vertical"
+          ? (positionY - offsetY) / imgHeight
+          : (positionX - offsetX) / imgWidth;
+      return minMaxNumber(sliderPercentage, 0, 1);
+    };
+
+    window.addEventListener("resize.pixelcompare", function (e) {
+      adjustSlider(sliderPct);
+    });
+
+    var offsetX = 0;
+    var offsetY = 0;
+    var imgWidth = 0;
+    var imgHeight = 0;
+    var onMoveStart = function onMoveStart(e) {
+      if (
+        ((e.distX > e.distY && e.distX < -e.distY) ||
+          (e.distX < e.distY && e.distX > -e.distY)) &&
+        sliderOrientation !== "vertical"
+      ) {
+        e.preventDefault();
+      } else if (
+        ((e.distX < e.distY && e.distX < -e.distY) ||
+          (e.distX > e.distY && e.distX > -e.distY)) &&
+        sliderOrientation === "vertical"
+      ) {
+        e.preventDefault();
+      }
+      _addClass(container, "active");
+      offsetX = container.offsetLeft;
+      offsetY = container.offsetTop;
+      imgWidth = beforeImg.getBoundingClientRect().width;
+      imgHeight = beforeImg.getBoundingClientRect().height;
+    };
+    var onMove = function onMove(e) {
+      if (_hasClass(container, "active")) {
+        sliderPct = getSliderPercentage(
+          e.pageX || e.changedTouches[0].pageX,
+          e.pageY || e.changedTouches[0].pageY
+        );
+        adjustSlider(sliderPct);
+      }
+    };
+    var onMoveEnd = function onMoveEnd() {
+      _removeClass(container, "active");
+    };
+
+    var moveTarget = options.move_with_handle_only ? slider : container;
+
+    moveTarget.addEventListener("mousedown", onMoveStart);
+    container.addEventListener("mousemove", onMove);
+    window.addEventListener("mouseup", onMoveEnd);
+
+    moveTarget.addEventListener("touchstart", onMoveStart);
+    container.addEventListener("touchmove", onMove);
+    window.addEventListener("touchend", onMoveEnd);
+
+    if (options.hover) {
+      container.addEventListener("mouseenter", onMoveStart);
+      container.addEventListener("mousemove	", onMove);
+      container.addEventListener("mouseleave", onMoveEnd);
+    }
+
+    slider.addEventListener("touchmove", function (e) {
+      e.preventDefault();
+    });
+
+    container
+      .querySelector("img")
+      .addEventListener("mousedown", function (event) {
+        event.preventDefault();
+      });
+
+    if (options.click_to_move) {
+      container.on("click", function (e) {
+        offsetX = container.offset().left;
+        offsetY = container.offset().top;
+        imgWidth = beforeImg.width();
+        imgHeight = beforeImg.height();
+        sliderPct = getSliderPercentage(e.pageX, e.pageY);
+        adjustSlider(sliderPct);
+      });
+    }
+    window.dispatchEvent(new Event("resize.pixelcompare"));
+  });
+};
