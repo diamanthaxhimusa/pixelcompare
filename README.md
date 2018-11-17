@@ -1,4 +1,4 @@
-# Pixelcompare - Vannija JS image comparison
+# Pixelcompare - Vanilla JS image comparison
 
 Options
 
