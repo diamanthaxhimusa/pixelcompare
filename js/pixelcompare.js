@@ -56,9 +56,10 @@
   
   var pcContainers = document.querySelectorAll('[data-pixelcompare]');
 
-  pcContainers.forEach(function (el) {
+  pcContainers.forEach(function (pcContainer) {
     var sliderPct = options.default_offset_pct;
-    var imageContainer = el;
+    var imageContainer = pcContainer;
+    options.hover = pcContainer.hasAttribute("data-hover");
     var orientations = ['vertical', 'horizontal', 'sides'];
 
     var datasetOrientation = imageContainer.dataset.pixelcompareOrientation;
@@ -66,7 +67,7 @@
     var beforeDirection = sliderOrientation === "vertical" ? "down" : "left";
     var afterDirection = sliderOrientation === "vertical" ? "up" : "right";
 
-    var container = _wrap(el, "div", sliderOrientation);
+    var container = _wrap(pcContainer, "div", sliderOrientation);
 
     var beforeImg = container.querySelectorAll("img")[0];
     beforeImg.draggable = false;
@@ -166,7 +167,7 @@
     var offsetY = 0;
     var imgWidth = 0;
     var imgHeight = 0;
-    var onMoveStart = function onMoveStart(e) {
+    var onMoveStart = function (e) {
       if (
         ((e.distX > e.distY && e.distX < -e.distY) ||
           (e.distX < e.distY && e.distX > -e.distY)) &&
@@ -186,7 +187,7 @@
       imgWidth = beforeImg.getBoundingClientRect().width;
       imgHeight = beforeImg.getBoundingClientRect().height;
     };
-    var onMove = function onMove(e) {
+    var onMove = function (e) {
       if (_hasClass(container, "active")) {
         sliderPct = getSliderPercentage(
           e.pageX || e.changedTouches[0].pageX,
@@ -195,25 +196,24 @@
         adjustSlider(sliderPct);
       }
     };
-    var onMoveEnd = function onMoveEnd() {
+    var onMoveEnd = function () {
       _removeClass(container, "active");
     };
 
-    var moveTarget = options.move_with_handle_only ? slider : container;
-
-    moveTarget.addEventListener("mousedown", onMoveStart);
-    container.addEventListener("mousemove", onMove);
-    window.addEventListener("mouseup", onMoveEnd);
-
-    moveTarget.addEventListener("touchstart", onMoveStart);
-    container.addEventListener("touchmove", onMove);
-    window.addEventListener("touchend", onMoveEnd);
-
     if (options.hover) {
       container.addEventListener("mouseenter", onMoveStart);
-      container.addEventListener("mousemove	", onMove);
       container.addEventListener("mouseleave", onMoveEnd);
+      container.addEventListener("mousemove", onMove);
+    } else {
+      var moveTarget = options.move_with_handle_only ? slider : container;
+      window.addEventListener("mouseup", onMoveEnd);
+      container.addEventListener("mousemove", onMove);
+      moveTarget.addEventListener("mousedown", onMoveStart);
+      moveTarget.addEventListener("touchstart", onMoveStart);
+      container.addEventListener("touchmove", onMove);
+      window.addEventListener("touchend", onMoveEnd);
     }
+
 
     slider.addEventListener("touchmove", function (e) {
       e.preventDefault();
