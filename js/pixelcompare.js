@@ -60,6 +60,7 @@
     var sliderPct = options.default_offset_pct;
     var imageContainer = pcContainer;
     options.hover = pcContainer.hasAttribute("data-hover");
+    options.orientation = pcContainer.hasAttribute("data-vertical") ? "vertical":"horizontal";
     var orientations = ['vertical', 'horizontal', 'sides'];
 
     var datasetOrientation = imageContainer.dataset.pixelcompareOrientation;
