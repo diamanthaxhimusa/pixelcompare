@@ -1,72 +1,77 @@
 "use strict";
-
-var _extend = function _extend(defaults, options) {
-  var extended = {};
-  var prop;
-  for (prop in defaults) {
-    if (Object.prototype.hasOwnProperty.call(defaults, prop)) {
-      extended[prop] = defaults[prop];
+/**
+ * PIXELCOMPARE
+ * Javascript image comparison
+ * @author diamanthaxhimusa@gmail.com
+ */
+(function () {
+  var _extend = function (defaults, options) {
+    var extended = {};
+    var prop;
+    for (prop in defaults) {
+      if (Object.prototype.hasOwnProperty.call(defaults, prop)) {
+        extended[prop] = defaults[prop];
+      }
     }
-  }
-  for (prop in options) {
-    if (Object.prototype.hasOwnProperty.call(options, prop)) {
-      extended[prop] = options[prop];
+    for (prop in options) {
+      if (Object.prototype.hasOwnProperty.call(options, prop)) {
+        extended[prop] = options[prop];
+      }
     }
-  }
-  return extended;
-};
+    return extended;
+  };
+  
+  var _addClass = function (element, classname) {
+    var arr;
+    arr = element.className.split(" ");
+    if (arr.indexOf(classname) == -1) {
+      element.className += " " + classname;
+    }
+  };
+  
+  var _hasClass = function (element, className) {
+    return new RegExp("(\\s|^)" + className + "(\\s|$)").test(element.className);
+  };
+  
+  var _removeClass = function (element, className) {
+    element.classList.remove(className);
+  };
+  
+  var _wrap = function (element, tag, sliderOrientation) {
+    var div = document.createElement(tag);
+    _addClass(div, "pixelcompare-wrapper pixelcompare-" + sliderOrientation);
+    element.parentElement.insertBefore(div, element);
+    div.appendChild(element);
+    return div;
+  };
+  
+  var options = {
+    default_offset_pct: 0.5,
+    orientation: "horizontal",
+    overlay: false,
+    hover: false,
+    move_with_handle_only: true,
+    click_to_move: false
+  };
+  
+  var pcContainers = document.querySelectorAll('[data-pixelcompare]');
 
-var _addClass = function _addClass(element, classname) {
-  var arr;
-  arr = element.className.split(" ");
-  if (arr.indexOf(classname) == -1) {
-    element.className += " " + classname;
-  }
-};
-
-var _hasClass = function _hasClass(element, className) {
-  return new RegExp("(\\s|^)" + className + "(\\s|$)").test(element.className);
-};
-
-var _removeClass = function _removeClass(element, className) {
-  element.classList.remove(className);
-};
-
-var _wrap = function _wrap(element, tag, sliderOrientation) {
-  var div = document.createElement(tag);
-  _addClass(div, "pixelcompare-wrapper pixelcompare-" + sliderOrientation);
-  element.parentElement.insertBefore(div, element);
-  div.appendChild(element);
-  return div;
-};
-
-var pixelcompare = function pixelcompare(options) {
-  var options = _extend(
-    {
-      default_offset_pct: 0.5,
-      orientation: "horizontal",
-      overlay: false,
-      hover: false,
-      move_with_handle_only: true,
-      click_to_move: false
-    },
-    options
-  );
-
-  var imgs = document.querySelectorAll(options.container);
-
-  return imgs.forEach(function (el) {
+  pcContainers.forEach(function (el) {
     var sliderPct = options.default_offset_pct;
     var imageContainer = el;
-    var sliderOrientation = options.orientation;
+    var orientations = ['vertical', 'horizontal', 'sides'];
+
+    var datasetOrientation = imageContainer.dataset.pixelcompareOrientation;
+    var sliderOrientation = orientations.includes(datasetOrientation) ? datasetOrientation : options.orientation;
     var beforeDirection = sliderOrientation === "vertical" ? "down" : "left";
     var afterDirection = sliderOrientation === "vertical" ? "up" : "right";
 
     var container = _wrap(el, "div", sliderOrientation);
 
     var beforeImg = container.querySelectorAll("img")[0];
-
+    beforeImg.draggable = false;
     var afterImg = container.querySelectorAll("img")[1];
+    afterImg.draggable = false;
 
     var node = document.createElement("div");
     _addClass(node, "pixelcompare-handle");
@@ -101,6 +106,7 @@ var pixelcompare = function pixelcompare(options) {
       return {
         w: w + "px",
         h: h + "px",
+        wp: dimensionPct * 100,
         cw: dimensionPct * w + "px",
         ch: dimensionPct * h + "px"
       };
@@ -112,6 +118,11 @@ var pixelcompare = function pixelcompare(options) {
           "rect(0, " + offset.w + ", " + offset.ch + ", 0)";
         afterImg.style.clip =
           "rect(" + offset.ch + ", " + offset.w + ", " + offset.h + ", 0)";
+      } else if (sliderOrientation === "sides") {
+        beforeImg.style.clipPath =
+          `polygon(0% ${2 * (50 - offset.wp)}%, ${2 * offset.wp}% 100%, 0% 100%)`;
+        afterImg.style.clipPath =
+          `polygon(100% ${(2 * (100 - offset.wp))}%, ${-2 * (50 - offset.wp)}% 0%, 100% 0%)`;
       } else {
         beforeImg.style.clip =
           "rect(0, " + offset.cw + ", " + offset.h + ", 0)";
@@ -226,4 +237,4 @@ var pixelcompare = function pixelcompare(options) {
     }
     window.dispatchEvent(new Event("resize.pixelcompare"));
   });
-};
+})();

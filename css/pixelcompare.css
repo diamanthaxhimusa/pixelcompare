@@ -69,7 +69,10 @@ img.pixelcompare-before, img.pixelcompare-after {
   overflow: hidden;
   position: relative;
   -webkit-user-select: none;
-  -moz-user-select: none; 
+  -khtml-user-select: none;
+  -moz-user-select: none;
+  -o-user-select: none;
+  user-select: none;
 }
 .pixelcompare-container img {
   max-width: 100%;
